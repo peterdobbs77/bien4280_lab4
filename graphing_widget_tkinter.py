@@ -18,7 +18,7 @@ flag_arduino = False
 flag_save = False
 flag_alarm = False
 # Global serial port
-port = None
+port = serial.Serial()
 
 x1 = "time"
 
@@ -133,12 +133,12 @@ class GraphingWidget(Tkinter.Canvas):
 
         if self.arduinoButton.config('text')[-1] == 'Connect Arduino':
             self.arduinoButton.config(text='Disconnect Arduino', bg="red")
-            flag_arduino = True
             port = serial.Serial(port='com3',
                                  baudrate=38400,
                                  bytesize=serial.EIGHTBITS,
                                  stopbits=serial.STOPBITS_ONE,
                                  timeout=1)
+            flag_arduino = True
         else:
             self.arduinoButton.config(text='Connect Arduino', bg="green")
             flag_arduino = False
@@ -282,7 +282,6 @@ class GraphingWidget(Tkinter.Canvas):
 # New process starts here which periodically returns a new value of
 def get_serial():
     import sys
-    import serial
     import math
 
     # defining all flags
@@ -290,6 +289,7 @@ def get_serial():
     global flag_arduino
     global flag_save
     global x1
+    global port
 
     i = 0
     j = 0
@@ -316,47 +316,55 @@ def get_serial():
 
     alarmthreshold = 50
 
+    # port = serial.Serial(port='com3',
+    #                     baudrate=38400,
+    #                     bytesize=serial.EIGHTBITS,
+    #                     stopbits=serial.STOPBITS_ONE,
+    #                     timeout=1)
+
     while exit_flag == False:
-        ultrasonicdata = port.read(1)
-        if len(ultrasonicdata) != 0:
-            if ultrasonicdata == '\n':
-                port.read(1)  # reading '\r' character to prevent that character being read
-                j = 0
-                datapoint = ""
-                for k in range(0, len(stringarrray)):
-                    # sys.stdout.write("digit " + stringarrray[k])
-                    datapoint = datapoint + stringarrray[k]
-                del stringarrray[:]
-                # my_graphing_widget.add_y_value(alarmthreshold, series=0)
-                if flag_arduino:
-                    sys.stdout.write(datapoint)
-                    sys.stdout.write('\n')
-                    my_graphing_widget.add_y_value(int(datapoint), series=1)
-                    dataArrray.append(int(datapoint))
+        if flag_arduino:
+            ultrasonicdata = port.read(1)
+            if len(ultrasonicdata) != 0:
+                if ultrasonicdata == '\n':
+                    port.read(1)  # reading '\r' character to prevent that character being read
+                    j = 0
+                    datapoint = ""
+                    for k in range(0, len(stringarrray)):
+                        # sys.stdout.write("digit " + stringarrray[k])
+                        datapoint = datapoint + stringarrray[k]
+                    del stringarrray[:]
+                    # my_graphing_widget.add_y_value(alarmthreshold, series=0)
+                    if flag_arduino:
+                        sys.stdout.write(datapoint)
+                        sys.stdout.write('\n')
+                        my_graphing_widget.add_y_value(int(datapoint), series=1)
+                        dataArrray.append(int(datapoint))
 
-                    xl1time = int(time.time() - startTime)
-                    xl1.set(str(xl1time) + " Sec")
-                    # xl2.set(str(xl1time-1) + " Sec")
-                    xl3.set(str(xl1time - 5) + " Sec")
-                    timeArray.append(xl1time)
+                        xl1time = int(time.time() - startTime)
+                        xl1.set(str(xl1time) + " Sec")
+                        # xl2.set(str(xl1time-1) + " Sec")
+                        xl3.set(str(xl1time - 5) + " Sec")
+                        timeArray.append(xl1time)
 
-                    if int(datapoint) < alarmthreshold:
-                        flag_alarm = True
-                        my_graphing_widget.alarmEvent()
-                    else:
-                        flag_alarm = False
-                        my_graphing_widget.alarmEvent()
-                i = (i + math.pi / 128) % (2.0 * math.pi)
-            else:
-                stringarrray.append(str(ultrasonicdata))
-        if flag_save:
-            out = open('UltrasonicData.csv', 'w')
-            for l in range(0, len(dataArrray)):
-                out.write('%d, ' % dataArrray[l])
-                out.write('%d' % timeArray[l])
-                out.write('\n')
-            out.close()
+                        if int(datapoint) < alarmthreshold:
+                            flag_alarm = True
+                            my_graphing_widget.alarmEvent()
+                        else:
+                            flag_alarm = False
+                            my_graphing_widget.alarmEvent()
+                    i = (i + math.pi / 128) % (2.0 * math.pi)
+                else:
+                    stringarrray.append(str(ultrasonicdata))
+            if flag_save:
+                out = open('UltrasonicData.csv', 'w')
+                for l in range(0, len(dataArrray)):
+                    out.write('%d, ' % dataArrray[l])
+                    out.write('%d' % timeArray[l])
+                    out.write('\n')
+                out.close()
     port.close()
+
 
 if __name__ == '__main__':
     root = Tkinter.Tk()

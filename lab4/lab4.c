@@ -51,26 +51,14 @@ OS_STK		SerialReceiveTaskStk[TASK_STK_SIZE];
 
 OS_EVENT	*SerialTxSem;
 OS_EVENT    *SerialTxMBox;
-OS_EVENT	*SerialRxSem;
 OS_EVENT	*LedMBox;
-OS_EVENT	*LedSem;
 OS_EVENT	*SerialRxMbox;
 OS_EVENT	*TriggerSem;
 OS_EVENT	*TriggerMbox;
 
-//double MAX_RANGE, MIN_RANGE;
-//int MAX_RATE, MIN_RATE;
-//volatile double distance;
-//volatile unsigned long overflowCounter, started, finished;
-//volatile unsigned int pcint;
 volatile unsigned int timeoutFrequency;
 unsigned char echoState;
 unsigned int cnt;
-
-extern uint8_t CmdIndx; //index for command buffer
-extern uint8_t Parm1Indx; //index for parameter buffer
-extern uint8_t Parm2Indx; //index for parameter buffer
-extern uint8_t CLIstate;
 
 /*
  *********************************************************************************************************
@@ -79,6 +67,8 @@ extern uint8_t CLIstate;
  */
 
 extern void InitPeripherals(void);
+extern int cliBuildCommand(char nextChar);
+extern void cliProcessCommand(void);
 
 void	TaskStart(void *data);              /* Function prototypes of Startup task */
 void	TimerTask(void *data);				//
@@ -86,10 +76,8 @@ void	LedTask(void *data);				//
 void	SerialTransmitTask(void *data);		//
 void	SensorTask(void *data);				//
 void	PostTxCompleteSem(void);			//
+//void	SerialReceiveTask(void *data);		//
 //void	ReadSerialChar(void);				//
-//void	PostRxCompleteMbox(void);			//
-//void	IncrementOverflowCounter(void);		//
-//void	EchoHelper(void);					//
 
 /*
  *********************************************************************************************************
@@ -104,18 +92,11 @@ int main (void) {
 /* Create OS_EVENT resources here  */;
 	SerialTxMBox = OSMboxCreate((void *)0);
 	//SerialRxMbox = OSMboxCreate((void *)0);
-	//LedSem = OSSemCreate(1);
 	SerialTxSem = OSSemCreate(1);
-	//SerialRxSem = OSSemCreate(1);
 	TriggerSem = OSSemCreate(1);
 	//LedMBox = OSMboxCreate((void *)0);
 	TriggerMbox = OSMboxCreate((void *)0);
 /* END Create OS_EVENT resources   */
-
-	//MAX_RANGE = 200;
-	//MIN_RANGE = 0;
-	//MAX_RATE = 1000;
-	//MIN_RATE = 10;
 
     OSTaskCreate(TaskStart, (void *)0, &TaskStartStk[START_TASK_STK_SIZE - 1], 0);
 
@@ -136,7 +117,7 @@ void  TaskStart (void *pdata) {
 
 	//OSTaskCreate(TimerTask, (void *)0, &TaskTimerStk[TASK_STK_SIZE - 1], 6);
 	OSTaskCreate(SensorTask, (void *)0, &TaskSensorStk[TASK_STK_SIZE - 1], 8);
-	//OSTaskCreate(LedTask, (void *)0, &TaskLedStk[TASK_STK_SIZE - 1], 10);
+	OSTaskCreate(LedTask, (void *)0, &TaskLedStk[TASK_STK_SIZE - 1], 10);
 
 	OSTaskCreate(SerialTransmitTask, (void *) 0, &TaskSerialTransmitStk[TASK_STK_SIZE-1], 12);
 	//OSTaskCreate(SerialReceiveTask, (void *) 0, &SerialReceiveTaskStk[TASK_STK_SIZE-1], 14);
@@ -350,10 +331,8 @@ void PostTriggerComplete(void) {
 	PORTB &= ~_BV(PORTB4);	// turn trigger pin off
 	PRR |= _BV(PRTIM2);		/* set the bit to turn off the Timer2 module
 								in the power management section */
-	//OSSemPost(TriggerSem);
 }
 
-#if 1
 void EchoHelper(void){
 	char DistMessage[TX_BUFFER_SIZE];
 
@@ -378,41 +357,3 @@ void EchoHelper(void){
 			break;
 	}
 }
-
-#else
-//void EchoHelper(void){
-	//uint8_t reg = PIND;			//port byte
-	//uint8_t diff = reg ^ pcint;	//diff: save reg with current reg
-	//pcint = reg;				//save new PORTD val
-//
-	////if (PORTD & _BV(PORTD7)){ // echoPin(7) value is HIGH
-	//if (diff & PORTD7){ // echoPin(7) value is HIGH
-		////TCCR1A = 0;
-		////TCCR1B = 0;			// gives consistency to the period
-		//cnt = TCNT1;	// get counter
-		//started = (overflowCounter << 16) + cnt;
-	////} else if (~PORTD & ~_BV(PORTD7)) { // echoPin(7) is LOW
-	//} else if (diff | ~PORTD7) { // echoPin(7) is LOW
-		////TCCR1A = 0;
-		////TCCR1B = 0;			// gives consistency to the period
-		//finished = (overflowCounter << 16) + cnt;
-		//overflowCounter = 0;
-//
-		///*	Calculate the distance (in cm)
-			//based on the speed of sound		*/
-		//distance = (finished-started)/SOUND_CONVERSION_FACTOR;
-//
-		//if (distance >= MAX_RANGE || distance <= MIN_RANGE){
-			///*	Send negative number to computer and
-				//turn LED ON to indicate "out of range"	*/
-			//OSMboxPost(SerialTxMBox,OUT_OF_RANGE);
-			//PORTB |= _BV(LED_PIN);	// set ledPin (13) HIGH
-		//} else {
-			///*	Send duration length in seconds (or whatever)
-				//turn LED OFF to indicate object within range	*/
-			//OSMboxPost(SerialTxMBox,NO_ERR_MSG);
-			//PORTB &= ~_BV(LED_PIN);	// set ledPin (13) LOW
-		//}
-	//}
-//}
-#endif
