@@ -6,6 +6,7 @@
 import Tkinter
 import threading
 import time
+import serial
 
 from Tkinter import *  # from tk_pack found online
 
@@ -16,6 +17,8 @@ exit_flag = False
 flag_arduino = False
 flag_save = False
 flag_alarm = False
+# Global serial port
+port = None
 
 x1 = "time"
 
@@ -126,13 +129,20 @@ class GraphingWidget(Tkinter.Canvas):
     def toggleArduino(self):
         global flag_arduino
         global flag_alarm
+        global port
 
         if self.arduinoButton.config('text')[-1] == 'Connect Arduino':
             self.arduinoButton.config(text='Disconnect Arduino', bg="red")
             flag_arduino = True
+            port = serial.Serial(port='com3',
+                                 baudrate=38400,
+                                 bytesize=serial.EIGHTBITS,
+                                 stopbits=serial.STOPBITS_ONE,
+                                 timeout=1)
         else:
             self.arduinoButton.config(text='Connect Arduino', bg="green")
             flag_arduino = False
+            port.close()
 
     def write_slogan(self):
         print("Tkinter is easy to use!")
@@ -304,12 +314,6 @@ def get_serial():
 
     startTime = time.time() - 3
 
-    port = serial.Serial(port='com3',
-                         baudrate=38400,
-                         bytesize=serial.EIGHTBITS,
-                         stopbits=serial.STOPBITS_ONE,
-                         timeout=1)
-
     alarmthreshold = 50
 
     while exit_flag == False:
@@ -354,23 +358,6 @@ def get_serial():
             out.close()
     port.close()
 
-
-# New process starts here which periodically returns a new value of
-# x and y.
-def get_data():
-    import math
-    i = 0
-    while exit_flag == False:
-        # Since we are editting a Gtk element, we need to protect
-        # it...
-
-        my_graphing_widget.add_y_value(255 / 2 * math.sin(i) + 255 / 2, series=0)
-        my_graphing_widget.add_y_value(255 / 2 * math.sin(i + math.pi / 4) + 255 / 2, series=1)
-        my_graphing_widget.add_y_value(255 / 2 * math.sin(i + math.pi / 2) + 255 / 2, series=2)
-        time.sleep(0.01)
-        i = (i + math.pi / 128) % (2.0 * math.pi)
-
-
 if __name__ == '__main__':
     root = Tkinter.Tk()
     frame = Tkinter.Frame(root, width=300, height=300)
@@ -385,7 +372,6 @@ if __name__ == '__main__':
 
     # Create a new thread to add data
     t = threading.Thread(target=get_serial)
-    # t = threading.Thread(target=get_data)
     t.setDaemon(True)  # It is a daemon
     t.start()
 
