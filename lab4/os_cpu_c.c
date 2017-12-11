@@ -125,6 +125,8 @@ void InitPeripherals(void)
 	UCSR0B = (1<<RXEN0)|(1<<TXEN0);		//
 	/* set frame format: 8data, 1 stop bit */
 	UCSR0C = (1<<UCSZ00)|(1<<UCSZ01)|(0<USBS0);
+
+	UCSR0B |= _BV(RXCIE0);	// enable RX Complete Interrupt 0
 #endif
 
 	// Enable Global Interrupts
