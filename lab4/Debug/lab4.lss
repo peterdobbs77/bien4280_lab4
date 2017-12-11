@@ -1470,8 +1470,8 @@ void  SensorTask (void *pdata){
 	INT8U err;
 	void *msg;
 	char LocalMessage;
-	timeoutFrequency = 10;
-     8fa:	8a e0       	ldi	r24, 0x0A	; 10
+	timeoutFrequency = 100;
+     8fa:	84 e6       	ldi	r24, 0x64	; 100
      8fc:	90 e0       	ldi	r25, 0x00	; 0
      8fe:	90 93 f9 04 	sts	0x04F9, r25
      902:	80 93 f8 04 	sts	0x04F8, r24

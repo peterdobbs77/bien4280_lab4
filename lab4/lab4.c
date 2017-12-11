@@ -288,7 +288,7 @@ void  SensorTask (void *pdata){
 	INT8U err;
 	void *msg;
 	char LocalMessage;
-	timeoutFrequency = 10;
+	timeoutFrequency = 100;
 	INT16U TriggerTimeOut = OS_TICKS_PER_SEC/timeoutFrequency;
 	for (;;) {
 		msg = OSMboxPend(TriggerMbox, TriggerTimeOut, &err);

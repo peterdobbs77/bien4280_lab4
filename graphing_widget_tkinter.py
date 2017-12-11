@@ -101,7 +101,7 @@ class GraphingWidget(Tkinter.Canvas):
         self.arduinoButton.pack(side=LEFT)
         self.saveButton = Button(frame, text="Save Data", bg="blue", command=self.quickSave)
         self.saveButton.pack(side=LEFT)
-        self.alarmButton = Button(frame, text="Keep Calm", bg="yellow", command=self.alarmEvent)
+        self.alarmButton = Button(frame, text="No Alarm", bg="white", command=self.alarmEvent)
         self.alarmButton.pack(side=LEFT)
         self.quitbutton = Button(frame, text="QUIT", bg="red", command=frame.quit)
         self.quitbutton.pack(side=RIGHT)
@@ -156,12 +156,9 @@ class GraphingWidget(Tkinter.Canvas):
         if flag_alarm == TRUE:
             self.alarmButton.config(text='Keep Calm')
             self.alarmButton.config(bg='red')
-            # flag_alarm = True
-            print("Alarm Occured!")
         else:
-            self.alarmButton.config(text='Remain Indoors')
+            self.alarmButton.config(text='No Alarm')
             self.alarmButton.config(bg='white')
-            # flag_alarm = False
 
     def disable_series(self, series=0):
         """Disable a series"""
@@ -293,8 +290,8 @@ def get_serial():
 
     i = 0
     j = 0
-    dataArrray = []
-    stringarrray = []
+    dataArray = []
+    stringarray = []
     timeArray = []
 
     xl1 = StringVar()
@@ -330,36 +327,34 @@ def get_serial():
                     port.read(1)  # reading '\r' character to prevent that character being read
                     j = 0
                     datapoint = ""
-                    for k in range(0, len(stringarrray)):
-                        # sys.stdout.write("digit " + stringarrray[k])
-                        datapoint = datapoint + stringarrray[k]
-                    del stringarrray[:]
-                    # my_graphing_widget.add_y_value(alarmthreshold, series=0)
+                    for k in range(0, len(stringarray)):
+                        datapoint = datapoint + stringarray[k]
+                    del stringarray[:]
                     if flag_arduino:
                         sys.stdout.write(datapoint)
                         sys.stdout.write('\n')
-                        my_graphing_widget.add_y_value(int(datapoint), series=1)
-                        dataArrray.append(int(datapoint))
+                        my_graphing_widget.add_y_value(int(datapoint), series=0)
+                        dataArray.append(int(datapoint))
 
                         xl1time = int(time.time() - startTime)
                         xl1.set(str(xl1time) + " Sec")
-                        # xl2.set(str(xl1time-1) + " Sec")
                         xl3.set(str(xl1time - 5) + " Sec")
                         timeArray.append(xl1time)
 
                         if int(datapoint) < alarmthreshold:
                             flag_alarm = True
+                            print("Alarm Occured!")
                             my_graphing_widget.alarmEvent()
                         else:
                             flag_alarm = False
                             my_graphing_widget.alarmEvent()
                     i = (i + math.pi / 128) % (2.0 * math.pi)
                 else:
-                    stringarrray.append(str(ultrasonicdata))
+                    stringarray.append(str(ultrasonicdata))
             if flag_save:
                 out = open('UltrasonicData.csv', 'w')
-                for l in range(0, len(dataArrray)):
-                    out.write('%d, ' % dataArrray[l])
+                for l in range(0, len(dataArray)):
+                    out.write('%d, ' % dataArray[l])
                     out.write('%d' % timeArray[l])
                     out.write('\n')
                 out.close()
@@ -372,11 +367,8 @@ if __name__ == '__main__':
     frame.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
     my_graphing_widget = GraphingWidget(frame, num_series=3, history=5, y_min=0, y_max=255)
     my_graphing_widget.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
-    my_graphing_widget.change_series_color("green", 0)
-    my_graphing_widget.change_series_color("red", 1)
-    my_graphing_widget.change_series_color("cyan", 2)
-    my_graphing_widget.change_series_width(3, 1)
-    my_graphing_widget.change_series_width(5, 2)
+    my_graphing_widget.change_series_color("cyan", 0)
+    my_graphing_widget.change_series_width(3, 0)
 
     # Create a new thread to add data
     t = threading.Thread(target=get_serial)
