@@ -1,4 +1,4 @@
-# bien4280_lab4
+# ultrasonic_ucos
 Ultrasonic sensor controlled by uC/OS-II on an Arduino Uno. Data is displayed through a python GUI.
 
 Lab4 Project
