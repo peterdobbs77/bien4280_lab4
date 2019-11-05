@@ -1,5 +1,5 @@
 # ultrasonic_ucos
-Ultrasonic sensor controlled by uC/OS-II on an Arduino Uno. Data is displayed through a python GUI.
+Ultrasonic sensor controlled by MicroC/OS-II on an Arduino Uno. Data is displayed through a python GUI.
 
 ## features
 * Interrupt-driven serial communication (both transmit and receive)
